@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import pandas as pd
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+
+data = pd.read_excel('Datos_Tarea2.xlsx', sheet_name='Datos')
+X = data.iloc[:, :8].values
+Y = data.iloc[:, 8].values
+X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size=0.3, random_state=0)
+
+model_configs = [{'epochs': 100, 'layers': [100, 100], 'sublayers': ['relu', 'relu']},
+    {'epochs': 200, 'layers': [128, 64, 39], 'sublayers': ['relu', 'relu', 'relu']},
+    {'epochs': 150, 'layers': [64, 32], 'sublayers': ['relu', 'relu']}]
+
+results = []
+
+for config in model_configs:
+    model = keras.Sequential()    
+    for layer_size, activation in zip(config['layers'], config['sublayers']):
+        model.add(keras.layers.Dense(layer_size, activation=activation, input_dim=8))    
+    model.add(keras.layers.Dense(1, activation='sigmoid'))    
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])    
+    history = model.fit(X_Train, Y_Train, validation_data=(X_Test, Y_Test), batch_size=20, epochs=config['epochs'])    
+    loss, accuracy = model.evaluate(X_Test, Y_Test)    
+    predictions = (model.predict(X_Test) > 0.5).astype(int)    
+    results.append(predictions)
+    print(f"Configuración: Épocas={config['epochs']}, Capas={config['layers']}, Subcapas={config['sublayers']}")
+    print(f"Precisión en los datos de prueba: {accuracy * 100:.2f}%")    
+    for epoch, (train_loss, val_loss) in enumerate(zip(history.history['loss'], history.history['val_loss'])):
+        print(f"Época {epoch + 1}: PErdida en entrenamiento: {train_loss:.4f}, Perdida en validacion: {val_loss:.4f}")
+
+best_model = None
+best_accuracy = 0.0
+
+for i, config in enumerate(model_configs):
+    accuracy = (results[i] == Y_Test.reshape(-1, 1)).mean()    
+    print(f"Configuracion: Epocas={config['epochs']}, Capas={config['layers']}, Subcapas={config['sublayers']}")
+    print(f"Precision en los datos de prueba: {accuracy * 100:.2f}%")    
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        best_model = i + 1
+
+print(f"El mejor modelo es  {best_model} con una precision de {best_accuracy * 100:.2f}%.")
