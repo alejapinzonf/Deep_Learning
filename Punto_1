@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -5,32 +8,38 @@ from tensorflow import keras
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
+plt.close('all')
 data = pd.read_excel('Datos_Tarea2.xlsx', sheet_name='Datos').values
 X, Y = data[:, :8], data[:, 8]
 
 X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size=0.3, random_state=0)
 
-model = keras.Sequential([
-    keras.layers.Dense(100, activation='relu', input_dim=8),
-    keras.layers.Dense(100, activation='relu'),
-    keras.layers.Dense(1, activation='sigmoid')
-])
+print("--------------------Punto 1-----------------------")
+num_hidden_layers = int(input("Ingrese el numero de capas: "))
+num_epochs = int(input("Ingrese el nmuero de epocas: "))
 
+model = keras.Sequential()
+model.add(keras.layers.Dense(100, activation='relu', input_dim=8))
+
+for _ in range(num_hidden_layers):
+    model.add(keras.layers.Dense(100, activation='relu'))
+    
+model.add(keras.layers.Dense(1, activation='sigmoid'))
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-history = model.fit(X_Train, Y_Train, validation_data=(X_Test, Y_Test), batch_size=20, epochs=200)
-
+history = model.fit(X_Train, Y_Train, validation_data=(X_Test, Y_Test), batch_size=20, epochs=num_epochs)
 loss, accuracy = model.evaluate(X_Test, Y_Test)
-print(f"Precision en los datos de prueba: {accuracy * 100:.2f}%")
 
+print(f"Precisión en los datos de prueba: {accuracy * 100:.2f}%")
 for epoch, (train_loss, val_loss) in enumerate(zip(history.history['loss'], history.history['val_loss'])):
-    print(f"Epoca {epoch + 1}: PErdida en entrenamiento: {train_loss:.4f}, Perdida en validacion: {val_loss:.4f}")
-
+    print(f"Epoca {epoch + 1}: Perdida en entrenamiento: {train_loss:.4f}, PErdida en validación: {val_loss:.4f}")
+    
 plt.figure(2)
 plt.plot(history.history['loss'], label='PErdida en entrenamiento')
 plt.plot(history.history['val_loss'], label='Perdida en validación')
 plt.xlabel('Epocas')
-plt.ylabel('Pérdida')
+plt.ylabel('Perdida')
 plt.legend()
-plt.title('Curva de Pérdida durante el Entrenamiento')
+plt.title('Curva de perdida durante el entrenamiento')
 plt.show()
+
+
